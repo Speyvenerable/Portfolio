@@ -5,14 +5,14 @@
   var $ = function(id){ return document.getElementById(id); };
   var mb=$('mb'), fab=$('mb-fab'), minBtn=$('mb-min'), listBtn=$('mb-list'), playBtn=$('mb-play'), shufBtn=$('mb-shuf');
   var titleEl=$('mb-title'), subEl=$('mb-sub'), coverEl=$('mb-cover'), stateEl=$('mb-state'), noteEl=$('mb-note');
-  var fillEl=$('mb-fill'), barEl=$('mb-bar'), posEl=$('mb-pos'), durEl=$('mb-dur');
+  var tracksEl=$('mb-tracks'), fillEl=$('mb-fill'), barEl=$('mb-bar'), posEl=$('mb-pos'), durEl=$('mb-dur');
   var inPreview = (function(){ try{ return window.top !== window.self; }catch(e){ return true; } })();
   var PREVIEW_MSG = 'This is a preview window (like Claude). Preview windows block outside players such as SoundCloud, so the music usually will not play here. It should work once the site is hosted (for example on GitHub Pages) or opened in your own browser.';
   var hasUrl = /^https?:\/\/(www\.)?soundcloud\.com\//i.test(SOUNDCLOUD_URL);
   if(hasUrl) $('mb-ext').href = SOUNDCLOUD_URL;
 
   var w=null, ready=false, started=false, playing=false, userPaused=false, wantPlay=false, initStarted=false, shuffle=false;
-  var pos=0, dur=0, t0=0, tick=0, hintT=0, loadT=0, count=0, reach=null;
+  var curIdx=-1, list=[], bars=[], NB=64, pos=0, dur=0, t0=0, tick=0, hintT=0, loadT=0, count=0, reach=null;
 
   function prettySlug(u){
     var m=u.match(/\/sets\/([^\/?#]+)/); if(!m) return 'SoundCloud';
@@ -29,6 +29,64 @@
   }
   function showPanel(on){
     mb.classList.toggle('tracklist', on); listBtn.setAttribute('aria-pressed', on?'true':'false');
+    if(on) markCurrent(true);
+  }
+  function showRaw(on){ mb.classList.toggle('raw', on); }
+
+  /* ---- waveform bars (styled like the box) ---- */
+  function buildBars(){
+    var wrap=document.createElement('div'); wrap.className='mb-bars'; wrap.setAttribute('aria-hidden','true');
+    for(var i=0;i<NB;i++){ var b=document.createElement('i'); wrap.appendChild(b); bars.push(b); }
+    barEl.insertBefore(wrap, barEl.firstChild);
+    setWave(pseudo(1));
+  }
+  function pseudo(seed){
+    var a=[], x=(seed*9301+49297)%233280||1;
+    for(var i=0;i<NB;i++){ x=(x*9301+49297)%233280; var r=x/233280;
+      a.push(.22+.78*Math.abs(Math.sin(i*.35+seed))*(.45+.55*r)); }
+    return a;
+  }
+  function setWave(a){ for(var i=0;i<NB;i++) bars[i].style.height=Math.max(12,Math.round(a[i]*100))+'%'; }
+  function realWave(snd){
+    var u=snd.waveform_url; if(!u||!window.fetch) return;
+    u=u.replace(/\.png.*$/,'.json').replace('w1.sndcdn.com','wave.sndcdn.com');
+    var id=snd.id;
+    fetch(u).then(function(r){ return r.json(); }).then(function(j){
+      if(!j||!j.samples||id!==curId) return;
+      var s=j.samples, max=Math.max.apply(null,s)||1, out=[], step=s.length/NB;
+      for(var i=0;i<NB;i++){ var m=0; for(var k=Math.floor(i*step);k<Math.floor((i+1)*step);k++) m=Math.max(m,s[k]||0); out.push(m/max); }
+      setWave(out);
+    }).catch(function(){});
+  }
+  var curId=0;
+
+  /* ---- tracklist ---- */
+  function buildTracks(l){
+    list=l||[]; tracksEl.innerHTML='';
+    list.forEach(function(t,i){
+      var b=document.createElement('button'); b.type='button'; b.className='mb-trk'; b.dataset.i=i;
+      var art=(t.artwork_url||(t.user&&t.user.avatar_url)||'').replace('-large.','-t200x200.');
+      var th=document.createElement('span'); th.className='mb-th'; if(art){ var im=document.createElement('img'); im.alt=''; im.loading='lazy'; im.src=art; th.appendChild(im); }
+      var eq=document.createElement('span'); eq.className='mb-teq'; eq.innerHTML='<i></i><i></i><i></i>'; th.appendChild(eq);
+      var tx=document.createElement('span'); tx.className='mb-tx';
+      var a=document.createElement('b'); a.textContent=t.title||'Track';
+      var c=document.createElement('em'); c.textContent=(t.user&&t.user.username)||'';
+      tx.appendChild(a); tx.appendChild(c);
+      var d=document.createElement('span'); d.className='mb-td'; d.textContent=fmt(t.duration||0);
+      b.appendChild(th); b.appendChild(tx); b.appendChild(d);
+      b.addEventListener('click',function(){ if(!w||!ready) return; userPaused=false; w.skip(i); w.play(); armHint(); });
+      tracksEl.appendChild(b);
+    });
+    markCurrent();
+  }
+  function markCurrent(scroll){
+    if(!w||!ready) return;
+    w.getCurrentSoundIndex(function(i){
+      curIdx=i;
+      var rows=tracksEl.children;
+      for(var k=0;k<rows.length;k++) rows[k].classList.toggle('cur', k===i);
+      if(scroll && rows[i]) tracksEl.scrollTop=Math.max(0, rows[i].offsetTop-tracksEl.offsetTop-8);
+    });
   }
   function render(){
     mb.classList.toggle('playing', playing);
@@ -37,6 +95,7 @@
     if(dur) p = Math.min(p, dur);
     var pct = dur ? (p/dur*100) : 0;
     fillEl.style.width = pct+'%';
+    var on=Math.round(pct/100*NB); for(var i=0;i<NB;i++) bars[i].classList.toggle('on', i<on);
     barEl.setAttribute('aria-valuenow', Math.round(pct));
     posEl.textContent = fmt(p); durEl.textContent = fmt(dur);
   }
@@ -50,6 +109,7 @@
       titleEl.textContent = snd.title || 'Unknown track';
       subEl.textContent = (snd.user && snd.user.username) ? snd.user.username : 'SoundCloud';
       dur = snd.duration || dur;
+      if(snd.id!==curId){ curId=snd.id; setWave(pseudo(snd.id%97+1)); realWave(snd); markCurrent(); }
       setCover(snd.artwork_url || (snd.user && snd.user.avatar_url));
       render();
     });
@@ -58,8 +118,8 @@
     clearTimeout(hintT);
     hintT=setTimeout(function(){
       if(!playing){
-        showPanel(true);
-        note(inPreview ? PREVIEW_MSG : 'Nothing started. Your browser may block playback from this button: press the play button on the SoundCloud player above.');
+        showRaw(true);
+        note(inPreview ? PREVIEW_MSG : 'Nothing started. Your browser may block playback from this button: press the play button on the SoundCloud player above, then it will switch back to this style.');
       }
     }, 2200);
   }
@@ -100,17 +160,17 @@
       w=SC.Widget(f); var E=SC.Widget.Events;
       w.bind(E.READY, function(){
         ready=true; clearTimeout(loadT); note('');
-        w.getSounds(function(l){ count=(l&&l.length)||0; });
+        w.getSounds(function(l){ count=(l&&l.length)||0; buildTracks(l); });
         loadSound();
         if(wantPlay){ wantPlay=false; w.play(); armHint(); }
       });
-      w.bind(E.PLAY, function(){ playing=true; started=true; t0=performance.now(); clearTimeout(hintT);
+      w.bind(E.PLAY, function(){ playing=true; started=true; t0=performance.now(); clearTimeout(hintT); showRaw(false);
         if(noteEl.textContent.indexOf('Nothing started')>-1) note(''); loadSound(); render(); });
       w.bind(E.PAUSE, function(){ pos=pos+(performance.now()-t0); t0=performance.now(); playing=false; render(); });
-      w.bind(E.PLAY_PROGRESS, function(e){ pos=e.currentPosition||0; t0=performance.now(); if(!playing){ playing=true; started=true; } render(); });
-      if(E.ERROR) w.bind(E.ERROR, function(){ showPanel(true); note(inPreview ? PREVIEW_MSG : 'SoundCloud reported an error for this playlist. It may be private, removed, or not allowed to be embedded.'); });
+      w.bind(E.PLAY_PROGRESS, function(e){ pos=e.currentPosition||0; t0=performance.now(); if(!playing){ playing=true; started=true; clearTimeout(hintT); showRaw(false); note(''); loadSound(); } render(); });
+      if(E.ERROR) w.bind(E.ERROR, function(){ showRaw(true); note(inPreview ? PREVIEW_MSG : 'SoundCloud reported an error for this playlist. It may be private, removed, or not allowed to be embedded.'); });
       w.bind(E.FINISH, function(){
-        pos=0; if(shuffle && count>1) w.skip(Math.floor(Math.random()*count));
+        pos=0; markCurrent(); if(shuffle && count>1) w.skip(Math.floor(Math.random()*count));
       });
     });
   }
@@ -132,6 +192,9 @@
   }
   function closeBox(){ mb.classList.remove('open'); stopTick(); fab.focus({preventScroll:true}); }
 
+  buildBars();
+  /* load the player in the background right away, so the first tap on MUSIC can start playback directly */
+  if(hasUrl){ if(document.readyState==='complete') setTimeout(init,300); else window.addEventListener('load', function(){ setTimeout(init,300); }); }
   fab.addEventListener('click', openBox);
   minBtn.addEventListener('click', closeBox);
   document.addEventListener('keydown', function(e){ if(e.key==='Escape' && mb.classList.contains('open')) closeBox(); });
