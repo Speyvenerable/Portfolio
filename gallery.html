@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gallery | Speyvenerable</title>
+<meta name="description" content="Gallery of Speyvenerable: favourite novel art and more.">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<script>document.documentElement.className+=' js';</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/gallery.css">
+</head>
+<body class="gpage">
+<div class="cursor-glow" id="glow" aria-hidden="true"></div>
+<div class="page">
+
+<!-- ================= NAV ================= -->
+<nav class="top" aria-label="Main">
+  <a class="navbtn br sm brand" href="index.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2 6.3 20.3l1.2-6.4L2.8 9.5l6.4-.8z"/></svg>
+    <span class="lbl">Speyvenerable</span>
+  </a>
+  <a class="navbtn br sm" href="index.html#project">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M2.8 6.5h6.4l2 2.3h9.9v10.4H2.8z"/><path d="M2.8 19.2l3-8.4h17l-3 8.4"/></svg>
+    Project
+  </a>
+  <a class="navbtn br sm" href="index.html#about">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="9.5" r="3.2" fill="currentColor"/><path d="M5.8 18.5c1.8-3.4 10.6-3.4 12.4 0" fill="currentColor"/></svg>
+    About
+  </a>
+  <a class="navbtn br sm" href="index.html#contact">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="2.8" y="5" width="18.4" height="14" /><path d="M3 6l9 7.2L21 6"/></svg>
+    Contact
+  </a>
+  <a class="navbtn br sm" id="nav-github" href="https://github.com/Speyvenerable" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+    GitHub
+  </a>
+</nav>
+
+<section class="view" id="view-gallery">
+<div class="frame g-frame">
+  <div class="sechead">
+    <div class="tag br">/GALLERY</div>
+    <div class="bar">
+      <div class="dots rgb" style="margin-left:14px"><i></i><i></i><i></i></div>
+      <span class="title">Gallery...</span>
+      <a class="g-back br sm" href="index.html#contact">&#9664; BACK</a>
+    </div>
+  </div>
+  <div class="g-body">
+    <div class="g-stage" id="g-stage">
+      <svg class="g-lines" id="g-lines" aria-hidden="true"></svg>
+      <div class="g-fxbox" id="g-fx" aria-hidden="true"></div>
+      <div class="folder folder-bk" id="folder-bk" aria-hidden="true"><span class="f-back"></span><span class="f-tab"></span></div>
+      <button class="folder" id="folder" type="button" aria-expanded="false" aria-label="Open the gallery folder">
+        <span class="f-front"><span class="f-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M2.8 6.5h6.4l2 2.3h9.9v10.4H2.8z"/></svg></span><span class="f-name">GALLERY</span><span class="f-count" id="f-count">0 FILES</span></span>
+      </button>
+      <div class="g-hint" id="g-hint">&#9654; CLICK THE FOLDER TO OPEN</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<footer class="foot">
+  <a class="foot-btn" href="index.html#contact">&#9650; BACK TO PORTFOLIO</a>
+</footer>
+</div><!-- /page -->
+
+<!-- picture viewer -->
+<div class="g-lb" id="g-lb" hidden><div class="g-lb-in br"><img id="g-lb-img" alt=""><div class="g-lb-cap" id="g-lb-cap"></div><button type="button" class="g-lb-x" id="g-lb-x" aria-label="Close">&times;</button></div></div>
+
+<!-- gallery theme song (plays only on this page) -->
+<div class="gm-holder" id="gm-holder" aria-hidden="true"><div id="gm-yt"></div></div>
+<button class="gm br sm" id="gm" type="button" aria-pressed="false" aria-label="Pause or play the gallery song">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5" fill="currentColor"/><circle cx="17.5" cy="16" r="2.5" fill="currentColor"/></svg>
+  <span id="gm-label">LOADING...</span>
+  <span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>
+</button>
+
+<script src="js/gallery.js"></script>
+<script src="js/gallery-music.js"></script>
+<script src="js/cursor.js"></script>
+</body>
+</html>
